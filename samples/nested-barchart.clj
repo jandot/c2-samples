@@ -10,7 +10,7 @@ body { background-color:white;}
 ")
 
 (let [data [{:m 5 :f 13} {:m 8 :f 4} {:m 7 :f 11} {:m 11 :f 9}]
-      s (scale/linear :domain [15 0] :range [300 0])
+      s (scale/linear :domain [0 15] :range [0 300])
 	  indexed-data (map-indexed vector data)]
   [:svg
 	[:style {:type "text/css"} (str "<![CDATA[" css "]]>")]
