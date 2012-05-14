@@ -7,6 +7,7 @@ body { background-color:white;}
 line { stroke:grey;}
 ")
 
+; Also see horizontal-barchart for a better way to index the datapoints (using map-indexed)
 (let [x-s (range 800)
       y-s (take 800 (repeatedly #(rand-int 300)))
       data (apply assoc {} (interleave x-s y-s))
