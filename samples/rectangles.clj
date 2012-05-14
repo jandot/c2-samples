@@ -1,4 +1,4 @@
-(ns bars
+(ns rectangles
   (:use [c2.core :only [unify]]))
 
 (def css "
