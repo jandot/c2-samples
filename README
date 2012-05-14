@@ -1,0 +1,7 @@
+Examples using C2 visualization toolkit (= D3 for clojure)
+
+To use visual repl:
+  * java -jar vrepl-1.1.1-standalone.jar
+  * Go to http://localhost:8987 => will refresh/open file that was changed last in samples-directory
+
+For more info, see http://keminglabs.com/c2/
