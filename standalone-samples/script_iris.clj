@@ -6,27 +6,30 @@
 (use '[incanter core stats charts datasets])
 (require '[c2.scale :as scale])
 
-(def css "
-body { background-color:white;}
-.coordinate-axes { stroke: black; }
-.setosa { stroke: rgb(228,26,28) }
-.versicolor { stroke: rgb(55,126,184) }
-.virginica { stroke: rgb(77,175,74)}
-text {font-family: 'Georgia'; font-weight:lighter; font-size:14px}
-.setosa-datapoint:hover { stroke: black; stroke-width: 3}
-.versicolor-datapoint:hover { stroke: black; stroke-width: 3}
-.virginica-datapoint:hover { stroke: black; stroke-width: 3}
-")
-
 (def s-sl (scale/linear :domain [4.3 7.9] :range [0 400]))
 (def s-sw (scale/linear :domain [2 4.4] :range [0 400]))
 (def s-pl (scale/linear :domain [1 6.9] :range [0 400]))
 (def s-pw (scale/linear :domain [0.1 2.5] :range [0 400]))
 
 (def data (:rows (get-dataset :iris)))
-(def setosa (filter #(= "setosa" (:Species %)) data))
-(def versicolor (filter #(= "versicolor" (:Species %)) data))
-(def virginica (filter #(= "virginica" (:Species %)) data))
+(def setosa {:data (filter #(= "setosa" (:Species %)) data), :colour "rgb(228,26,28)"})
+(def versicolor {:data (filter #(= "versicolor" (:Species %)) data), :colour "rgb(55,126,184)"})
+(def virginica {:data (filter #(= "virginica" (:Species %)) data), :colour "rgb(77,175,74)"})
+
+(def css (str "
+body { background-color:white;}
+.coordinate-axes line {stroke:black}
+.setosa-datapoint:hover { stroke: black; stroke-width: 3}
+.versicolor-datapoint:hover { stroke: black; stroke-width: 3}
+.virginica-datapoint:hover { stroke: black; stroke-width: 3}
+text {font-family: 'Georgia'; font-weight:lighter; font-size:12px}"
+"rect.setosa { stroke:none; fill: " (:colour setosa) "}"
+"rect.versicolor { stroke:none; fill: " (:colour versicolor) "}"
+"rect.virginica { stroke:none; fill: " (:colour virginica) "}"
+".setosa { stroke: " (:colour setosa) "}"
+".versicolor { stroke: " (:colour versicolor) "}"
+".virginica { stroke: " (:colour virginica) "}"
+))
 
 (def svg [:svg
 	[:style {:type "text/css"} (str "<![CDATA[" css "]]>")]
@@ -39,20 +42,27 @@ text {font-family: 'Georgia'; font-weight:lighter; font-size:14px}
 		[:text {:x 220 :y 420} "sepal-width"]
 		[:text {:x 420 :y 420} "petal-length"]
 		[:text {:x 620 :y 420} "petal-width"]]
+	[:g.legend
+		[:rect.setosa {:x 650 :y 20 :width 20 :height 20}]
+		[:rect.versicolor {:x 650 :y 50 :width 20 :height 20}]
+		[:rect.virginica {:x 650 :y 80 :width 20 :height 20}]
+		[:text {:x 680 :y 40} "setosa"]
+		[:text {:x 680 :y 70} "versicolor"]
+		[:text {:x 680 :y 100} "virginica"]]
 	[:g.setosa
-		(unify setosa (fn [data-point]
+		(unify (:data setosa) (fn [data-point]
 			[:g.setosa-datapoint
 				[:line {:x1 20 :y1 (s-sl (:Sepal.Length data-point)) :x2 220 :y2 (s-sw (:Sepal.Width data-point))}]
 				[:line {:x1 220 :y1 (s-sw (:Sepal.Width data-point)) :x2 420 :y2 (s-pl (:Petal.Length data-point))}]
 				[:line {:x1 420 :y1 (s-pl (:Petal.Length data-point)) :x2 620 :y2 (s-pw (:Petal.Width data-point))}]]))]
 	[:g.versicolor
-		(unify versicolor (fn [data-point]
+		(unify (:data versicolor) (fn [data-point]
 			[:g.versicolor-datapoint
 				[:line {:x1 20 :y1 (s-sl (:Sepal.Length data-point)) :x2 220 :y2 (s-sw (:Sepal.Width data-point))}]
 				[:line {:x1 220 :y1 (s-sw (:Sepal.Width data-point)) :x2 420 :y2 (s-pl (:Petal.Length data-point))}]
 				[:line {:x1 420 :y1 (s-pl (:Petal.Length data-point)) :x2 620 :y2 (s-pw (:Petal.Width data-point))}]]))]
 	[:g.virginica
-		(unify virginica (fn [data-point]
+		(unify (:data virginica) (fn [data-point]
 			[:g.virginica-datapoint
 				[:line {:x1 20 :y1 (s-sl (:Sepal.Length data-point)) :x2 220 :y2 (s-sw (:Sepal.Width data-point))}]
 				[:line {:x1 220 :y1 (s-sw (:Sepal.Width data-point)) :x2 420 :y2 (s-pl (:Petal.Length data-point))}]
