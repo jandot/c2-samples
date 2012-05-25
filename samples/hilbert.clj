@@ -1,7 +1,8 @@
 (ns hilbert)
 
 (defn create-structure [n]
-	"Creates a Hilbert structure of order n."
+	"Creates a Hilbert structure of order n.
+	({:y -0.25, :x -0.25, :pos 0} {:y 0.25, :x -0.25, :pos 1} {:y 0.25, :x 0.25, :pos 2} {:y -0.25, :x 0.25, :pos 3})"
 	(if (= n 0)
 		[{:pos 0 :x 0 :y 0}]
 		(let [coords (create-structure (- n 1))
