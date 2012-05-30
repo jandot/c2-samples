@@ -8,7 +8,7 @@
 (def css "
 body { background-color: white; }
 circle { stroke: grey; fill: none; }
-text { stroke: black; font-family: Georgia; font-size: 10px; }
+text { font-family: Georgia; font-size: 10px; }
 line { stroke: grey; }
 path { fill: none; stroke-width: 3}
 ")
@@ -45,22 +45,43 @@ path { fill: none; stroke-width: 3}
 
 (def genome-length (reduce + (map :length chromosome-lengths)))
 
-(def chromosome-lengths-degree (map #(scale-linear % 0 genome-length 0 360) (map :length chromosome-lengths)))
+(def bp-cumul-stop (reductions + (map :length chromosome-lengths)))
 
-(def chromosome-thetas
-	(reductions + chromosome-lengths-degree))
+(def bp-cumul-start (butlast (cons 0 (map #(+ 1 %) bp-cumul-stop))))
 
-(def chromosome-thetas-with-names
-	(partition 2 (interleave (map :name chromosome-lengths) (map float chromosome-thetas))))
+(def chromosome-lengths-degree (map float (map #(scale-linear % 0 genome-length 0 360) (map :length chromosome-lengths))))
+
+(def degree-cumul-start (map float (map #(scale-linear % 0 genome-length 0 360) bp-cumul-start)))
+
+(def degree-cumul-stop (map float (map #(scale-linear % 0 genome-length 0 360) bp-cumul-stop)))
+
+(def chromosomes
+	(map #(apply assoc {}
+			(interleave [:name :bp-length :bp-cumul-start :bp-cumul-stop :degree-length :degree-cumul-start :degree-cumul-stop] %))
+			(partition 7 (interleave (map :name chromosome-lengths)
+									(map :length chromosome-lengths)
+									bp-cumul-start
+									bp-cumul-stop
+									chromosome-lengths-degree
+									degree-cumul-start
+									degree-cumul-stop))))
 
 (def data
 	[{:type "gain" :start 45 :stop 80}
-	 {:type "gain" :start 120 :stop 150}
-	 {:type "loss" :start 60 :stop 80}
-	 {:type "loss" :start 90 :stop 130}
-	 {:type "loss" :start 220 :stop 250}
-	 {:type "loss" :start 255 :stop 260}
-	 {:type "gain" :start 257 :stop 258}])
+	{:type "gain" :start 120 :stop 150}
+	{:type "loss" :start 60 :stop 80}
+	{:type "loss" :start 90 :stop 130}
+	{:type "loss" :start 220 :stop 250}
+	{:type "loss" :start 255 :stop 260}
+	{:type "gain" :start 257 :stop 258}])
+; (def data
+; 	[{:type "gain" :chr "chr1" :start 450000 :stop 800000}
+; 	 {:type "gain" :chr "chr3" :start 120000 :stop 150000}
+; 	 {:type "loss" :chr "chr3" :start 130000 :stop 160000}
+; 	 {:type "loss" :chr "chr7" :start 90000 :stop 130000}
+; 	 {:type "loss" :chr "chr12" :start 220000 :stop 250000}
+; 	 {:type "loss" :chr "chr16" :start 255000 :stop 260000}
+; 	 {:type "gain" :chr "chr16" :start 257000 :stop 258000}])
 
 (def svg
 	[:svg
@@ -68,20 +89,20 @@ path { fill: none; stroke-width: 3}
 		[:g.plot {:transform "translate(300,300)"}
 			[:circle {:cx 0 :cy 0 :r 150}]
 			[:g.chromosome-ticks
-				(unify chromosome-thetas (fn [datapoint]
+				(unify (map :degree-cumul-start chromosomes) (fn [datapoint]
 					(let [x1 (x 150 (degree-to-rad datapoint))
 						y1 (y 150 (degree-to-rad datapoint))
 						x2 (x 160 (degree-to-rad datapoint))
 						y2 (y 160 (degree-to-rad datapoint))]
 						[:line {:x1 x1 :y1 y1 :x2 x2 :y2 y2}])))
-				(unify chromosome-thetas-with-names (fn [datapoint]
-					(let [x (x 170 (degree-to-rad (second datapoint)))
-						y (y 170 (degree-to-rad (second datapoint)))]
-						[:text {:x x :y y} (first datapoint)])))]
+				(unify chromosomes (fn [datapoint]
+					(let [x (x 170 (degree-to-rad (:degree-cumul-start datapoint)))
+						y (y 170 (degree-to-rad (:degree-cumul-start datapoint)))]
+						[:text {:x x :y y} (:name datapoint)])))]
 			[:g.gains
 				(unify (filter #(= "gain" (:type %)) data) (fn [datapoint]
 					[:path {:d (arc (:start datapoint) (:stop datapoint) 145) :stroke "green"}]))]
-			[:g.gains
+			[:g.losses
 				(unify (filter #(= "loss" (:type %)) data) (fn [datapoint]
 					[:path {:d (arc (:start datapoint) (:stop datapoint) 140) :stroke "red"}]))]]])
 
