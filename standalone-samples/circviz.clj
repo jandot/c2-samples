@@ -5,6 +5,8 @@
 
 (load-file "polar.clj")
 
+(def RADIUS 150)
+
 (def css "
 body { background-color: white; }
 circle { stroke: grey; fill: none; }
@@ -49,11 +51,14 @@ path { fill: none; stroke-width: 3}
 
 (def bp-cumul-start (butlast (cons 0 (map #(+ 1 %) bp-cumul-stop))))
 
-(def chromosome-lengths-degree (map float (map #(scale-linear % 0 genome-length 0 360) (map :length chromosome-lengths))))
+(defn bp-cumul-to-degree-cumul [p]
+	(float (scale-linear p 0 genome-length 0 360)))
 
-(def degree-cumul-start (map float (map #(scale-linear % 0 genome-length 0 360) bp-cumul-start)))
+(def chromosome-lengths-degree (map #(bp-cumul-to-degree-cumul %) (map :length chromosome-lengths)))
 
-(def degree-cumul-stop (map float (map #(scale-linear % 0 genome-length 0 360) bp-cumul-stop)))
+(def degree-cumul-start (map #(bp-cumul-to-degree-cumul %) bp-cumul-start))
+
+(def degree-cumul-stop (map #(bp-cumul-to-degree-cumul %) bp-cumul-stop))
 
 (def chromosomes
 	(map #(apply assoc {}
@@ -74,6 +79,7 @@ path { fill: none; stroke-width: 3}
 	{:type "loss" :start 220 :stop 250}
 	{:type "loss" :start 255 :stop 260}
 	{:type "gain" :start 257 :stop 258}])
+
 ; (def data
 ; 	[{:type "gain" :chr "chr1" :start 450000 :stop 800000}
 ; 	 {:type "gain" :chr "chr3" :start 120000 :stop 150000}
@@ -83,17 +89,19 @@ path { fill: none; stroke-width: 3}
 ; 	 {:type "loss" :chr "chr16" :start 255000 :stop 260000}
 ; 	 {:type "gain" :chr "chr16" :start 257000 :stop 258000}])
 
+
+
 (def svg
 	[:svg
 		[:style {:type "text/css"} (str "<![CDATA[" css "]]>")]
 		[:g.plot {:transform "translate(300,300)"}
-			[:circle {:cx 0 :cy 0 :r 150}]
+			[:circle {:cx 0 :cy 0 :r RADIUS}]
 			[:g.chromosome-ticks
 				(unify (map :degree-cumul-start chromosomes) (fn [datapoint]
-					(let [x1 (x 150 (degree-to-rad datapoint))
-						y1 (y 150 (degree-to-rad datapoint))
-						x2 (x 160 (degree-to-rad datapoint))
-						y2 (y 160 (degree-to-rad datapoint))]
+					(let [x1 (x RADIUS (degree-to-rad datapoint))
+						y1 (y RADIUS (degree-to-rad datapoint))
+						x2 (x (+ 10 RADIUS) (degree-to-rad datapoint))
+						y2 (y (+ 10 RADIUS) (degree-to-rad datapoint))]
 						[:line {:x1 x1 :y1 y1 :x2 x2 :y2 y2}])))
 				(unify chromosomes (fn [datapoint]
 					(let [x (x 170 (degree-to-rad (:degree-cumul-start datapoint)))
@@ -101,9 +109,9 @@ path { fill: none; stroke-width: 3}
 						[:text {:x x :y y} (:name datapoint)])))]
 			[:g.gains
 				(unify (filter #(= "gain" (:type %)) data) (fn [datapoint]
-					[:path {:d (arc (:start datapoint) (:stop datapoint) 145) :stroke "green"}]))]
+					[:path {:d (arc (:start datapoint) (:stop datapoint) (- RADIUS 5)) :stroke "green"}]))]
 			[:g.losses
 				(unify (filter #(= "loss" (:type %)) data) (fn [datapoint]
-					[:path {:d (arc (:start datapoint) (:stop datapoint) 140) :stroke "red"}]))]]])
+					[:path {:d (arc (:start datapoint) (:stop datapoint) (- RADIUS 10)) :stroke "red"}]))]]])
 
 (spit "circviz.html" (html svg))
