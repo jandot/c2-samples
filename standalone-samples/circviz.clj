@@ -71,24 +71,33 @@ path { fill: none; stroke-width: 3}
 									degree-cumul-start
 									degree-cumul-stop))))
 
-(def data
-	[{:type "gain" :start 45 :stop 80}
-	{:type "gain" :start 120 :stop 150}
-	{:type "loss" :start 60 :stop 80}
-	{:type "loss" :start 90 :stop 130}
-	{:type "loss" :start 220 :stop 250}
-	{:type "loss" :start 255 :stop 260}
-	{:type "gain" :start 257 :stop 258}])
+(defn bp-chr-pos-to-cumul-pos [chr pos]
+	"Given a chromosome and position, returns the cumulative bp position (i.e. bp position on the whole genome)"
+	(+ pos (:bp-cumul-start (first (filter #(= chr (:name %)) chromosomes)))))
+
+(defn degree-chr-pos-to-cumul-pos [chr pos]
+	"Given a chromosome and position, returns the cumulative degree position"
+	(bp-cumul-to-degree-cumul (bp-chr-pos-to-cumul-pos chr pos)))
 
 ; (def data
-; 	[{:type "gain" :chr "chr1" :start 450000 :stop 800000}
-; 	 {:type "gain" :chr "chr3" :start 120000 :stop 150000}
-; 	 {:type "loss" :chr "chr3" :start 130000 :stop 160000}
-; 	 {:type "loss" :chr "chr7" :start 90000 :stop 130000}
-; 	 {:type "loss" :chr "chr12" :start 220000 :stop 250000}
-; 	 {:type "loss" :chr "chr16" :start 255000 :stop 260000}
-; 	 {:type "gain" :chr "chr16" :start 257000 :stop 258000}])
+; 	[{:type "gain" :start 45 :stop 80}
+; 	{:type "gain" :start 120 :stop 150}
+; 	{:type "loss" :start 60 :stop 80}
+; 	{:type "loss" :start 90 :stop 130}
+; 	{:type "loss" :start 220 :stop 250}
+; 	{:type "loss" :start 255 :stop 260}
+; 	{:type "gain" :start 257 :stop 258}])
 
+(def original-data
+	[{:type "gain" :chr "chr1" :start 450000 :stop 230000000}
+	 {:type "gain" :chr "chr3" :start 120000 :stop 15000000}
+	 {:type "loss" :chr "chr3" :start 130000 :stop 160000000}
+	 {:type "loss" :chr "chr7" :start 90000 :stop 53000000}
+	 {:type "loss" :chr "chr12" :start 220000 :stop 25000000}
+	 {:type "loss" :chr "chr16" :start 255000 :stop 46000000}
+	 {:type "gain" :chr "chr16" :start 257000 :stop 25800000}])
+
+(def data (map #(assoc % :start-degree (degree-chr-pos-to-cumul-pos (:chr %) (:start %)) :stop-degree (degree-chr-pos-to-cumul-pos (:chr %) (:stop %))) original-data))
 
 
 (def svg
@@ -109,9 +118,9 @@ path { fill: none; stroke-width: 3}
 						[:text {:x x :y y} (:name datapoint)])))]
 			[:g.gains
 				(unify (filter #(= "gain" (:type %)) data) (fn [datapoint]
-					[:path {:d (arc (:start datapoint) (:stop datapoint) (- RADIUS 5)) :stroke "green"}]))]
+					[:path {:d (arc (:start-degree datapoint) (:stop-degree datapoint) (- RADIUS 5)) :stroke "green"}]))]
 			[:g.losses
 				(unify (filter #(= "loss" (:type %)) data) (fn [datapoint]
-					[:path {:d (arc (:start datapoint) (:stop datapoint) (- RADIUS 10)) :stroke "red"}]))]]])
+					[:path {:d (arc (:start-degree datapoint) (:stop-degree datapoint) (- RADIUS 10)) :stroke "red"}]))]]])
 
 (spit "circviz.html" (html svg))
