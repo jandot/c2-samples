@@ -12,13 +12,19 @@ body { background-color: white; }
 circle { stroke: grey; fill: none; }
 text { font-family: Georgia; font-size: 10px; }
 line { stroke: grey; }
-path { fill: none; stroke-width: 3}
+.gains, .losses path { fill: none; stroke-width: 3}
+.two-locus path { fill: none; stroke-width: 1; }
 ")
 
 (defn arc [start-degree stop-degree radius]
 	(let [large-arc-flag (if (> 180 (- stop-degree start-degree)) 0 1)]
 		(str "M " (* radius (Math/cos (degree-to-rad start-degree))) " " (* radius (Math/sin (degree-to-rad start-degree)))
 			"A " radius " " radius " 0 " large-arc-flag " 1 " (* radius (Math/cos (degree-to-rad stop-degree))) " " (* radius (Math/sin (degree-to-rad stop-degree))))))
+
+(defn bezier [start-degree stop-degree radius]
+	"Draws a quadratic bezier curve (i.e. with one control point)"
+	(str "M " (* radius (Math/cos (degree-to-rad start-degree))) " " (* radius (Math/sin (degree-to-rad start-degree)))
+		"Q 0 0 " (* radius (Math/cos (degree-to-rad stop-degree))) " " (* radius (Math/sin (degree-to-rad stop-degree)))))
 
 (def chromosome-lengths
 	[{:name "chr1" :length 249250621}
@@ -79,15 +85,6 @@ path { fill: none; stroke-width: 3}
 	"Given a chromosome and position, returns the cumulative degree position"
 	(bp-cumul-to-degree-cumul (bp-chr-pos-to-cumul-pos chr pos)))
 
-; (def data
-; 	[{:type "gain" :start 45 :stop 80}
-; 	{:type "gain" :start 120 :stop 150}
-; 	{:type "loss" :start 60 :stop 80}
-; 	{:type "loss" :start 90 :stop 130}
-; 	{:type "loss" :start 220 :stop 250}
-; 	{:type "loss" :start 255 :stop 260}
-; 	{:type "gain" :start 257 :stop 258}])
-
 (def original-data
 	[{:type "gain" :chr "chr1" :start 450000 :stop 230000000}
 	 {:type "gain" :chr "chr3" :start 120000 :stop 15000000}
@@ -95,10 +92,20 @@ path { fill: none; stroke-width: 3}
 	 {:type "loss" :chr "chr7" :start 90000 :stop 53000000}
 	 {:type "loss" :chr "chr12" :start 220000 :stop 25000000}
 	 {:type "loss" :chr "chr16" :start 255000 :stop 46000000}
-	 {:type "gain" :chr "chr16" :start 257000 :stop 25800000}])
+	 {:type "gain" :chr "chr16" :start 257000 :stop 25800000}
+	 {:type "two-locus" :chr-from "chr9" :pos-from 100000 :chr-to "chr15" :pos-to 100000}
+	 {:type "two-locus" :chr-from "chr1" :pos-from 100000 :chr-to "chr17" :pos-to 100000}])
 
-(def data (map #(assoc % :start-degree (degree-chr-pos-to-cumul-pos (:chr %) (:start %)) :stop-degree (degree-chr-pos-to-cumul-pos (:chr %) (:stop %))) original-data))
+(def single-locus-data (filter #(contains? % :start) original-data))
+(def two-locus-data (filter #(contains? % :pos-from) original-data))
 
+(def single-locus-data-with-degree (map #(assoc % :start-degree (degree-chr-pos-to-cumul-pos (:chr %) (:start %))
+									:stop-degree (degree-chr-pos-to-cumul-pos (:chr %) (:stop %)))
+									single-locus-data))
+(def two-locus-data-with-degree (map #(assoc % :start-degree (degree-chr-pos-to-cumul-pos (:chr-from %) (:pos-from %))
+									:stop-degree (degree-chr-pos-to-cumul-pos (:chr-to %) (:pos-to %)))
+									two-locus-data))
+(def data (flatten (merge single-locus-data-with-degree two-locus-data-with-degree)))
 
 (def svg
 	[:svg
@@ -121,6 +128,9 @@ path { fill: none; stroke-width: 3}
 					[:path {:d (arc (:start-degree datapoint) (:stop-degree datapoint) (- RADIUS 5)) :stroke "green"}]))]
 			[:g.losses
 				(unify (filter #(= "loss" (:type %)) data) (fn [datapoint]
-					[:path {:d (arc (:start-degree datapoint) (:stop-degree datapoint) (- RADIUS 10)) :stroke "red"}]))]]])
+					[:path {:d (arc (:start-degree datapoint) (:stop-degree datapoint) (- RADIUS 10)) :stroke "red"}]))]
+			[:g.two-locus
+				(unify (filter #(= "two-locus" (:type %)) data) (fn [datapoint]
+					[:path {:d (bezier (:start-degree datapoint) (:stop-degree datapoint) (- RADIUS 15)) :stroke "blue"}]))]]])
 
 (spit "circviz.html" (html svg))
