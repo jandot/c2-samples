@@ -110,7 +110,7 @@ line { stroke: grey; }
 (def svg
 	[:svg
 		[:style {:type "text/css"} (str "<![CDATA[" css "]]>")]
-		[:g.plot {:transform "translate(300,300)"}
+		[:g.plot {:transform (str "translate(" (+ 100 RADIUS) "," (+ 100 RADIUS) ")")}
 			[:circle {:cx 0 :cy 0 :r RADIUS}]
 			[:g.chromosome-ticks
 				(unify (map :degree-cumul-start chromosomes) (fn [datapoint]
@@ -120,8 +120,8 @@ line { stroke: grey; }
 						y2 (y (+ 10 RADIUS) (degree-to-rad datapoint))]
 						[:line {:x1 x1 :y1 y1 :x2 x2 :y2 y2}])))
 				(unify chromosomes (fn [datapoint]
-					(let [x (x 170 (degree-to-rad (:degree-cumul-start datapoint)))
-						y (y 170 (degree-to-rad (:degree-cumul-start datapoint)))]
+					(let [x (x (+ 20 RADIUS) (degree-to-rad (:degree-cumul-start datapoint)))
+						y (y (+ 20 RADIUS) (degree-to-rad (:degree-cumul-start datapoint)))]
 						[:text {:x x :y y} (:name datapoint)])))]
 			[:g.gains
 				(unify (filter #(= "gain" (:type %)) data) (fn [datapoint]
